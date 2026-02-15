@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
+from typing import Any
+
 from .config import SUMMARY_CHUNK_SIZE, SUMMARY_MAX_LENGTH, SUMMARY_MIN_LENGTH, SUMMARY_MODEL
 
 
@@ -24,17 +27,12 @@ def summarize_with_t5(
     """
     Summarize long text by chunking, summarizing each chunk, then joining.
     """
-    try:
-        from transformers import pipeline
-    except ImportError:
-        return "[Summarization requires: pip install transformers torch]"
     chunks = chunk_for_summary(text, chunk_size)
     if not chunks:
         return ""
-    try:
-        pipe = pipeline("summarization", model=model_name)
-    except Exception as e:
-        return f"[Model load error: {e}]"
+    pipe = _get_summarization_pipeline(model_name)
+    if isinstance(pipe, str):
+        return pipe  # error message
     summaries = []
     for c in chunks:
         inp = c[:1024]
@@ -44,6 +42,16 @@ def summarize_with_t5(
         if out and isinstance(out, list) and len(out) > 0:
             summaries.append(out[0].get("summary_text", "").strip())
     return " ".join(summaries).strip()
+
+
+@lru_cache(maxsize=1)
+def _get_summarization_pipeline(model_name: str) -> Any:
+    """Cached summarization pipeline to avoid reloading on every call."""
+    try:
+        from transformers import pipeline
+        return pipeline("summarization", model=model_name)
+    except Exception as e:
+        return f"[Model load error: {e}]"
 
 
 def bleu_score(reference: str, candidate: str) -> float:

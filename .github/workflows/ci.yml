@@ -26,7 +26,19 @@ jobs:
         run: pip install ruff
 
       - name: Run Ruff
-        run: ruff check app.py src/
+        run: ruff check app.py src/ tests/
+
+      - name: Install project and run tests
+        run: |
+          pip install -e ".[dev]" -q
+          pip install -r requirements-test.txt -q
+          python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords'); nltk.download('punkt_tab')"
+          pytest tests/ -v --tb=short --cov=src --cov-report=term-missing --cov-fail-under=50
+
+      - name: Pylint (full score)
+        run: |
+          pip install pylint -q
+          pylint app.py src/ tests/ --output-format=text
 
   build:
     name: Build Docker

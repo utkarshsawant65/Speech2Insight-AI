@@ -39,9 +39,7 @@ def run_lsa(
     """
     if not documents:
         return None, None, np.array([]), [], []
-    n_topics = min(n_topics, len(documents), max_features)
-    if n_topics < 1:
-        n_topics = 1
+    n_topics = max(1, min(n_topics, len(documents), max_features))
     vectorizer = TfidfVectorizer(
         max_features=max_features, min_df=min_df, max_df=max_df, stop_words="english"
     )

@@ -1,7 +1,10 @@
-"""Task 2: Data preprocessing — clean, lowercase, remove punct/digits, stopwords (keep negatives)."""
+"""Task 2: Preprocessing — clean, lowercase, remove punct/digits, stopwords (keep negatives)."""
+
+from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import Set
 
 import nltk
 from nltk.corpus import stopwords
@@ -23,7 +26,7 @@ def _ensure_nltk_data():
         nltk.download("stopwords", quiet=True)
 
 
-def get_effective_stopwords():
+def get_effective_stopwords() -> Set[str]:
     """Stopwords minus negative words (for sentiment)."""
     _ensure_nltk_data()
     sw = set(stopwords.words("english"))
@@ -55,13 +58,13 @@ def preprocess_for_nlp(
     remove_digits: bool = True,
     remove_special: bool = True,
     remove_stopwords: bool = True,
-    custom_stopwords: set | None = None,
+    custom_stopwords: Set[str] | None = None,
 ) -> str:
     """
     Clean and tokenize: lowercase, remove punctuation/digits/special, stopwords (keeping negatives).
     Returns space-joined tokens.
     """
-    if not text or not text.strip():
+    if not isinstance(text, str) or not text.strip():
         return ""
     _ensure_nltk_data()
     if custom_stopwords is None:

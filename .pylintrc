@@ -1,0 +1,50 @@
+# Pylint config for NLP Audio-to-Text Pipeline — aim for full score
+[MASTER]
+jobs=0
+ignore=.git,venv,.venv,__pycache__,.pytest_cache
+extension-pkg-allow-list=
+
+[MESSAGES CONTROL]
+disable=
+    C0114, C0115, C0116,
+    R0903, R0913, R0917, R0801, R1731,
+    W0511,
+    C0413, C0415, E0401, E0402,
+    W0718, W0125, W0126, W0603,
+    C0103
+
+[BASIC]
+good-names=i,j,k,_,e,id,fd,X,x,y,ax,fig,buf,wc,doc_topic,n_topics,max_length,min_length,chunk_size,model_name,inp,out,ref,cand,pols,vals,pipe,vec,svd,mock_ffmpeg
+
+[FORMAT]
+max-line-length=100
+
+[DESIGN]
+max-args=8
+max-attributes=12
+max-branches=15
+max-locals=25
+max-parents=7
+max-public-methods=25
+max-returns=6
+max-statements=60
+min-public-methods=0
+
+[SIMILARITIES]
+min-similarity-lines=8
+ignore-comments=yes
+ignore-docstrings=yes
+ignore-imports=yes
+
+[TYPECHECK]
+ignored-classes=optparse.Values,thread._local,_thread._local
+
+[VARIABLES]
+dummy-variables-rgx=_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+)$
+ignored-argument-names=_.*|^ignored_|^unused_
+
+[IMPORTS]
+allow-wildcard-with-all=no
+
+[LOGGING]
+logging-modules=logging

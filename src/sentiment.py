@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import re
-from typing import NamedTuple
+from functools import lru_cache
+from typing import Any, NamedTuple
 
 from textblob import TextBlob
 
@@ -74,22 +75,27 @@ def aspect_based_sentiment(text: str, aspects: list[str]) -> dict[str, float]:
     return result
 
 
+@lru_cache(maxsize=2)
+def _get_emotion_pipeline(model_name: str) -> Any | None:
+    """Cached emotion pipeline to avoid reloading on every call."""
+    try:
+        from transformers import pipeline
+        return pipeline("text-classification", model=model_name, top_k=None)
+    except Exception:
+        return None
+
+
 def get_emotions_transformers(
     text: str,
     model_name: str = "j-hartmann/emotion-english-distilroberta-base",
     max_length: int = 512,
-):
+) -> dict[str, float]:
     """
     Emotion scores using transformers pipeline.
     Returns dict emotion -> score (averaged over chunks if text is long).
     """
-    try:
-        from transformers import pipeline
-    except ImportError:
-        return {}
-    try:
-        pipe = pipeline("text-classification", model=model_name, top_k=None)
-    except Exception:
+    pipe = _get_emotion_pipeline(model_name)
+    if pipe is None:
         return {}
     chunks = chunk_text(text, chunk_size=max_length)
     if not chunks:

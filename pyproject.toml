@@ -20,4 +20,19 @@ ignore = ["E501", "E402"]
 "app.py" = ["E402"]
 "src/topic_modeling.py" = ["N806"]
 
-# Optional: add [tool.pytest.ini_options] when you add tests
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "pytest-cov>=4.0", "pylint>=3.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-v --tb=short"
+filterwarnings = ["ignore:.*"]
+
+[tool.coverage.run]
+source = ["src", "app.py"]
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = ["pragma: no cover", "def __repr__", "raise NotImplementedError"]
+fail_under = 60

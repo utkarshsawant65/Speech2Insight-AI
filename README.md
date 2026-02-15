@@ -43,6 +43,10 @@ streamlit run app.py
 
 Then open the URL shown (e.g. `http://localhost:8501`).
 
+**Load time:** Whisper and heavy models are loaded only when you use **Transcribe** or **Summarization** (lazy imports + caching). The UI should open quickly; first transcription or summary may take longer while models load.
+
+**Transcription fails with "The system cannot find the file specified" (WinError 2)?** On Windows this almost always means **ffmpeg** is missing. Install ffmpeg and add it to your PATH ([download](https://ffmpeg.org/download.html); Windows: `winget install ffmpeg` or `choco install ffmpeg`, then add the `bin` folder to PATH). The app checks for ffmpeg and shows a clear message in the sidebar if it is not found.
+
 ## Usage
 
 1. **Upload** an audio file and click **Transcribe**, or **paste** a transcript to skip audio.
@@ -75,7 +79,8 @@ GitHub Actions workflow (`.github/workflows/ci.yml`):
 
 | Job   | Trigger        | What it does |
 |-------|----------------|---------------|
-| **Lint** | Push/PR to `main` or `master` | Runs [Ruff](https://docs.astral.sh/ruff/) on `app.py` and `src/`. |
+| **Lint** | Push/PR to `main` or `master` | Runs [Ruff](https://docs.astral.sh/ruff/) on `app.py`, `src/`, `tests/`. |
+| **Test** | Same | Installs test deps and runs `pytest tests/` (no torch/whisper). |
 | **Build** | After lint | Builds the Docker image (no push). |
 | **Push** | Push to `main`/`master` only | Builds and pushes the image to **GitHub Container Registry** (`ghcr.io/<owner>/<repo>`). |
 
@@ -88,7 +93,21 @@ To pull the image after push:
 docker pull ghcr.io/<your-username>/NLP-Project---audio-to-txt-converter:latest
 ```
 
-To extend later: add a deploy job (e.g. deploy to Cloud Run, Azure Container Apps, or a VM) or add `pytest` and run tests in CI.
+To extend: add a deploy job (e.g. Cloud Run, Azure Container Apps) or more test coverage.
+
+## Tests
+
+Unit tests use **pytest** and avoid heavy deps (Whisper/transformers) so CI stays fast:
+
+```bash
+pip install -r requirements-test.txt
+python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords'); nltk.download('punkt_tab')"
+pytest tests/ -v
+```
+
+Or with dev deps: `pip install -e ".[dev]"` then `pip install -r requirements-test.txt`. CI runs Ruff, **pytest** (with coverage ≥50%), and **Pylint** (10/10) on every push/PR.
+
+**Pylint (full score):** `pylint app.py src/ tests/` — config in `.pylintrc`. **Coverage:** `pytest tests/ --cov=src --cov-report=term-missing`.
 
 ## Project structure
 
@@ -97,16 +116,25 @@ NLP-Project---audio-to-txt-converter/
 ├── app.py                 # Streamlit UI
 ├── Dockerfile
 ├── docker-compose.yml
-├── pyproject.toml          # Ruff config (and future tooling)
+├── pyproject.toml          # Ruff + pytest config
 ├── requirements.txt
+├── requirements-test.txt   # Minimal deps for pytest (fast CI)
 ├── README.md
 ├── .github/workflows/
-│   └── ci.yml             # CI/CD: lint, Docker build, push to GHCR
+│   └── ci.yml             # CI/CD: lint, tests, Docker build, push to GHCR
 ├── Report/
 │   └── MINI PROJECT REPORT DA2 NLP.docx
+├── tests/
+│   ├── conftest.py        # Pytest fixtures
+│   ├── test_preprocess.py
+│   ├── test_sentiment.py
+│   ├── test_summarization.py
+│   ├── test_topic_modeling.py
+│   └── test_transcribe.py
 └── src/
     ├── config.py          # Chunk sizes, thresholds, model names
-    ├── transcribe.py      # Whisper transcription
+    ├── logger.py           # Optional centralized logging
+    ├── transcribe.py      # Whisper transcription (lazy load)
     ├── preprocess.py      # NLTK preprocessing (stopwords, negatives)
     ├── sentiment.py       # TextBlob, aspect-based, emotions
     ├── topic_modeling.py  # LSA, TF-IDF, word clouds
