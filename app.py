@@ -34,7 +34,6 @@ from src.summarization import bleu_score, rouge_scores, summarize_with_t5
 from src.topic_modeling import chunk_text as topic_chunk_text
 from src.topic_modeling import run_lsa, topic_heatmap, wordcloud_for_topic
 from src.transcribe import (
-    FFMPEG_REQUIRED_MSG,
     check_ffmpeg_available,
     load_whisper_model,
     transcribe_uploaded_file,
@@ -91,12 +90,12 @@ if step_upload:
         )
 
     if audio_file:
-        # Show ffmpeg status so user knows before clicking Transcribe
+        # ffmpeg is auto-provisioned from imageio-ffmpeg (pip install); no manual install needed
         try:
             check_ffmpeg_available()
-            st.sidebar.caption("✓ ffmpeg found")
+            st.sidebar.caption("✓ Audio ready")
         except FileNotFoundError:
-            st.sidebar.warning("ffmpeg not found — install it for transcription.")
+            st.sidebar.warning("Install ffmpeg: pip install imageio-ffmpeg")
         if st.button("Transcribe", key="transcribe_btn"):
             with st.spinner(
                 "Loading Whisper model and transcribing… (may take a while for long audio)"
@@ -110,19 +109,14 @@ if step_upload:
                     st.session_state.whisper_model = model
                     st.success("Transcription done.")
                 except FileNotFoundError as e:
-                    st.error(f"Transcription failed: {e}")
-                    if "ffmpeg" in str(e).lower() or "winerror 2" in str(e).lower():
-                        st.info(FFMPEG_REQUIRED_MSG)
+                    st.error(str(e))
                 except OSError as e:
                     if getattr(e, "winerror", None) == 2 or e.errno == 2:
-                        st.error("The system cannot find the file specified (usually ffmpeg).")
-                        st.info(FFMPEG_REQUIRED_MSG)
+                        st.error("Audio tool not found. Install: pip install imageio-ffmpeg")
                     else:
                         st.error(f"Transcription failed: {e}")
                 except Exception as e:
                     st.error(f"Transcription failed: {e}")
-                    if "2" in str(e) and "file" in str(e).lower():
-                        st.info(FFMPEG_REQUIRED_MSG)
         if st.session_state.transcript:
             st.subheader("Transcript")
             st.text_area(

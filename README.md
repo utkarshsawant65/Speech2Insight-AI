@@ -15,7 +15,7 @@ End-to-end NLP pipeline: **Audio → Transcribe → Preprocess → Sentiment →
 ## Requirements
 
 - **Python 3.10+**
-- **ffmpeg** (for Whisper) — [install](https://ffmpeg.org/download.html) and ensure `ffmpeg` is on your PATH.
+- No manual ffmpeg install: **ffmpeg** is provided via `imageio-ffmpeg` in `requirements.txt` (Windows/Linux/macOS). If you already have ffmpeg on PATH, that is used; otherwise the bundled binary is used automatically.
 
 ## Setup
 
@@ -28,7 +28,7 @@ python -m venv .venv
 .venv\Scripts\activate   # Windows
 # source .venv/bin/activate  # Linux/macOS
 
-# Install dependencies
+# Install dependencies (includes bundled ffmpeg via imageio-ffmpeg)
 pip install -r requirements.txt
 
 # Download NLTK data (first run will prompt; or run once)
@@ -41,11 +41,9 @@ python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
 streamlit run app.py
 ```
 
-Then open the URL shown (e.g. `http://localhost:8501`).
+Then open the URL shown (e.g. `http://localhost:8501`). **Transcription works out of the box** after `pip install -r requirements.txt`; no separate ffmpeg install or PATH setup needed.
 
 **Load time:** Whisper and heavy models are loaded only when you use **Transcribe** or **Summarization** (lazy imports + caching). The UI should open quickly; first transcription or summary may take longer while models load.
-
-**Transcription fails with "The system cannot find the file specified" (WinError 2)?** On Windows this almost always means **ffmpeg** is missing. Install ffmpeg and add it to your PATH ([download](https://ffmpeg.org/download.html); Windows: `winget install ffmpeg` or `choco install ffmpeg`, then add the `bin` folder to PATH). The app checks for ffmpeg and shows a clear message in the sidebar if it is not found.
 
 ## Usage
 

@@ -38,9 +38,11 @@ def test_transcribe_audio_missing_file(_mock_ffmpeg: MagicMock) -> None:
 
 
 def test_check_ffmpeg_available_raises_when_missing() -> None:
-    with patch("shutil.which", return_value=None):
-        with pytest.raises(FileNotFoundError, match="ffmpeg"):
-            check_ffmpeg_available()
+    # Ensure auto-provision does not run (no imageio_ffmpeg) so which("ffmpeg") stays None
+    with patch("src.transcribe._ensure_ffmpeg_on_path"):
+        with patch("shutil.which", return_value=None):
+            with pytest.raises(FileNotFoundError, match="ffmpeg"):
+                check_ffmpeg_available()
 
 
 def test_check_ffmpeg_available_passes_when_found() -> None:

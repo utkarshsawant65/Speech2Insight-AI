@@ -1,8 +1,9 @@
 # UI
 streamlit>=1.28.0
 
-# Audio → Text (Whisper; requires ffmpeg installed on system)
+# Audio → Text (Whisper; ffmpeg provided by imageio-ffmpeg if not on system)
 openai-whisper>=20231117
+imageio-ffmpeg>=0.4.9
 
 # NLP & preprocessing
 nltk>=3.8.1

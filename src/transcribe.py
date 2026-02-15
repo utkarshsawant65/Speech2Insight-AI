@@ -10,16 +10,66 @@ from typing import Any
 
 from .config import WHISPER_MODEL
 
-# Message when ffmpeg is missing (WinError 2 on Windows)
+# Fallback message when ffmpeg cannot be provided (no system, no bundle)
 FFMPEG_REQUIRED_MSG = (
-    "ffmpeg is required for audio decoding but was not found on your PATH. "
-    "Install from https://ffmpeg.org/download.html — Windows: add ffmpeg/bin to PATH, "
-    "or run: winget install ffmpeg  /  choco install ffmpeg"
+    "ffmpeg is required for audio decoding. Install it: "
+    "pip install imageio-ffmpeg  (bundled), or install ffmpeg and add to PATH."
 )
+
+_ffmpeg_path_ensured = False
+
+
+def _ffmpeg_cache_dir() -> Path:
+    """Platform-specific cache dir for bundled ffmpeg (industry standard: app data)."""
+    if os.name == "nt":
+        base = os.environ.get("LOCALAPPDATA", os.path.expanduser("~"))
+    else:
+        base = os.path.join(os.path.expanduser("~"), ".local", "share")
+    return Path(base) / "nlp_audio_txt" / "ffmpeg_bin"
+
+
+def _ensure_ffmpeg_on_path() -> None:
+    """
+    Ensure 'ffmpeg' is on PATH: use system ffmpeg if present, else bundle from
+    imageio-ffmpeg (pip install) so users need no manual ffmpeg install.
+    """
+    global _ffmpeg_path_ensured  # noqa: PLW0603
+    if _ffmpeg_path_ensured:
+        return
+    if shutil.which("ffmpeg") is not None:
+        _ffmpeg_path_ensured = True
+        return
+    try:
+        import imageio_ffmpeg  # type: ignore[import-untyped]
+    except ImportError:
+        _ffmpeg_path_ensured = True
+        return
+    exe = imageio_ffmpeg.get_ffmpeg_exe()
+    if not exe or not os.path.isfile(exe):
+        _ffmpeg_path_ensured = True
+        return
+    cache_dir = _ffmpeg_cache_dir()
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    ffmpeg_name = "ffmpeg.exe" if os.name == "nt" else "ffmpeg"
+    dest = cache_dir / ffmpeg_name
+    try:
+        if not dest.is_file() or os.path.getmtime(exe) > os.path.getmtime(dest):
+            shutil.copy2(exe, dest)
+    except OSError:
+        _ffmpeg_path_ensured = True
+        return
+    path_sep = os.pathsep
+    old_path = os.environ.get("PATH", "")
+    os.environ["PATH"] = str(cache_dir) + path_sep + old_path
+    _ffmpeg_path_ensured = True
 
 
 def check_ffmpeg_available() -> None:
-    """Raise a clear error if ffmpeg is not on PATH (fixes WinError 2 on Windows)."""
+    """
+    Ensure ffmpeg is available (system or bundled via imageio-ffmpeg);
+    raise with clear message only if neither is present.
+    """
+    _ensure_ffmpeg_on_path()
     if shutil.which("ffmpeg") is None:
         raise FileNotFoundError(FFMPEG_REQUIRED_MSG)
 
@@ -61,7 +111,6 @@ def transcribe_uploaded_file(
     check_ffmpeg_available()
     name = getattr(uploaded_file, "name", "audio.mp3")
     suffix = Path(name).suffix or ".mp3"
-    # Use gettempdir() + simple name so path is short and valid on Windows
     fd, tmp_path = tempfile.mkstemp(suffix=suffix, prefix="whisper_")
     try:
         os.close(fd)

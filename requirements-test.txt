@@ -1,4 +1,5 @@
 # Minimal deps for pytest (avoids torch/whisper/transformers for fast CI)
+# imageio-ffmpeg optional for transcribe tests that don't mock _ensure_ffmpeg_on_path
 pytest>=7.0
 pytest-cov>=4.0
 nltk>=3.8.1
