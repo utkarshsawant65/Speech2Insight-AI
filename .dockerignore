@@ -1,0 +1,37 @@
+# Git and env
+.git
+.gitignore
+.venv
+venv
+env
+.env
+*.env
+
+# IDE and OS
+.idea
+.vscode
+*.swp
+.DS_Store
+Thumbs.db
+
+# CI/CD (not needed inside image)
+.github
+
+# Docs and report (optional: remove if you want Report in image)
+Report/
+*.md
+!README.md
+
+# Tests and dev
+.pytest_cache
+.coverage
+htmlcov
+*.egg-info
+__pycache__
+*.pyc
+.pdm-python
+.pdm-build
+
+# Avoid copying large/unnecessary files
+*.docx
+*.doc

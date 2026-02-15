@@ -1,0 +1,23 @@
+# Project config — used by Ruff and future tooling
+[project]
+name = "nlp-audio-to-txt"
+version = "0.1.0"
+description = "NLP Audio-to-Text Pipeline with Streamlit"
+readme = "README.md"
+requires-python = ">=3.10"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+exclude = [".git", ".venv", "venv", "__pycache__"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E501", "E402"]
+# E402: module import not at top (app.py sets path before src imports)
+# N806: allow X for matrix in topic_modeling
+[tool.ruff.lint.per-file-ignores]
+"app.py" = ["E402"]
+"src/topic_modeling.py" = ["N806"]
+
+# Optional: add [tool.pytest.ini_options] when you add tests

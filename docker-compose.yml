@@ -1,0 +1,13 @@
+# Local run: docker compose up --build
+# App: http://localhost:8501
+services:
+  app:
+    build: .
+    ports:
+      - "8501:8501"
+    # Optional: mount local src for live code changes (dev)
+    # volumes:
+    #   - ./src:/app/src
+    #   - ./app.py:/app/app.py
+    environment:
+      - STREAMLIT_SERVER_MAX_UPLOAD_SIZE=500

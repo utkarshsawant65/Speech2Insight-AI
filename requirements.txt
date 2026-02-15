@@ -1,0 +1,31 @@
+# UI
+streamlit>=1.28.0
+
+# Audio → Text (Whisper; requires ffmpeg installed on system)
+openai-whisper>=20231117
+
+# NLP & preprocessing
+nltk>=3.8.1
+textblob>=0.17.1
+
+# Data & ML
+pandas>=2.0.0
+numpy>=1.24.0
+scikit-learn>=1.3.0
+
+# Sentiment (aspect/emotion) & summarization
+transformers>=4.35.0
+torch>=2.0.0
+sentencepiece>=0.1.99
+
+# Evaluation
+rouge-score>=0.1.2
+nltk  # for BLEU
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+wordcloud>=1.9.0
+
+# Doc parsing (optional, for report)
+python-docx>=1.0.0
