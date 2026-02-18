@@ -1,10 +1,11 @@
 """
-NLP Audio-to-Text Pipeline — Streamlit UI.
-End-to-end: Upload Audio → Transcribe → Preprocess → Sentiment → Topic Modeling → Summarization.
-Based on DA2 NLP Mini Project Report.
+speech2insight-AI — Streamlit UI.
+Speech to insights: Transcribe → Preprocess → Sentiment → Topic Modeling → Summarization.
 """
 
 import sys
+import threading
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -14,7 +15,7 @@ if str(ROOT) not in sys.path:
 import streamlit as st
 
 # set_page_config must be the first Streamlit command (reduces load-time issues)
-st.set_page_config(page_title="NLP Audio-to-Text Pipeline", layout="wide")
+st.set_page_config(page_title="speech2insight-AI", layout="wide")
 
 # Lazy imports for heavy modules (Whisper, transformers) — only when user triggers that step
 from src.config import (
@@ -64,9 +65,9 @@ if "summary" not in st.session_state:
     st.session_state.summary = ""
 
 # ----- UI -----
-st.title("NLP Audio-to-Text Pipeline")
+st.title("speech2insight-AI")
 st.caption(
-    "End-to-end: Audio → Transcribe → Preprocess → Sentiment → Topics → Summarization (DA2 NLP)"
+    "Speech → Transcribe → Preprocess → Sentiment → Topics → Summarization"
 )
 
 st.sidebar.header("Pipeline")
@@ -97,26 +98,49 @@ if step_upload:
         except FileNotFoundError:
             st.sidebar.warning("Install ffmpeg: pip install imageio-ffmpeg")
         if st.button("Transcribe", key="transcribe_btn"):
-            with st.spinner(
-                "Loading Whisper model and transcribing… (may take a while for long audio)"
-            ):
+            progress_bar = st.progress(0, text="Starting…")
+            result_holder: list = [None]
+            exception_holder: list = [None]
+
+            def run_transcribe() -> None:
                 try:
                     model = get_whisper_model_cached(whisper_model_name)
+                    progress_bar.progress(0.25, text="Model loaded. Transcribing…")
                     text = transcribe_uploaded_file(
                         audio_file, model=model, model_name=whisper_model_name
                     )
-                    st.session_state.transcript = text or ""
-                    st.session_state.whisper_model = model
-                    st.success("Transcription done.")
-                except FileNotFoundError as e:
+                    result_holder[0] = (model, text or "")
+                except Exception as e:  # noqa: BLE001
+                    exception_holder[0] = e
+
+            thread = threading.Thread(target=run_transcribe)
+            thread.start()
+            # Animate progress 25% → 95% while transcribing (Whisper has no progress API)
+            p = 0.25
+            while thread.is_alive() and p < 0.95:
+                time.sleep(0.5)
+                p = min(p + 0.05, 0.95)
+                progress_bar.progress(p, text="Transcribing…")
+            thread.join(timeout=1.0)
+            progress_bar.progress(1.0, text="Done.")
+            time.sleep(0.3)
+            progress_bar.empty()
+
+            if exception_holder[0]:
+                e = exception_holder[0]
+                if isinstance(e, FileNotFoundError):
                     st.error(str(e))
-                except OSError as e:
-                    if getattr(e, "winerror", None) == 2 or e.errno == 2:
-                        st.error("Audio tool not found. Install: pip install imageio-ffmpeg")
-                    else:
-                        st.error(f"Transcription failed: {e}")
-                except Exception as e:
+                elif isinstance(e, OSError) and (
+                    getattr(e, "winerror", None) == 2 or e.errno == 2
+                ):
+                    st.error("Audio tool not found. Install: pip install imageio-ffmpeg")
+                else:
                     st.error(f"Transcription failed: {e}")
+            else:
+                model, text = result_holder[0]
+                st.session_state.transcript = text
+                st.session_state.whisper_model = model
+                st.success("Transcription done.")
         if st.session_state.transcript:
             st.subheader("Transcript")
             st.text_area(
@@ -253,4 +277,4 @@ if step_summary and st.session_state.transcript:
         st.info("Transcript is short; add more text for summarization.")
 
 st.sidebar.divider()
-st.sidebar.caption("DA2 NLP Mini Project — Whisper, NLTK, TextBlob, LSA, T5")
+st.sidebar.caption("speech2insight-AI — Whisper, NLTK, TextBlob, LSA, T5")

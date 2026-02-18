@@ -1,8 +1,8 @@
 # Project config — used by Ruff and future tooling
 [project]
-name = "nlp-audio-to-txt"
+name = "speech2insight-ai"
 version = "0.1.0"
-description = "NLP Audio-to-Text Pipeline with Streamlit"
+description = "speech2insight-AI — Speech to insights with Streamlit"
 readme = "README.md"
 requires-python = ">=3.10"
 
@@ -21,7 +21,7 @@ ignore = ["E501", "E402"]
 "src/topic_modeling.py" = ["N806"]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0", "pytest-cov>=4.0", "pylint>=3.0"]
+dev = ["pytest>=7.0", "pytest-cov>=4.0", "pylint>=3.0", "mypy>=1.0", "pre-commit>=3.0"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -36,3 +36,10 @@ omit = ["*/tests/*", "*/__pycache__/*"]
 [tool.coverage.report]
 exclude_lines = ["pragma: no cover", "def __repr__", "raise NotImplementedError"]
 fail_under = 60
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+no_strict_optional = true
+warn_unused_configs = true
+files = ["src/"]

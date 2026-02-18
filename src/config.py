@@ -1,9 +1,14 @@
-"""Pipeline configuration (aligned with DA2 NLP report)."""
+"""Pipeline configuration for speech2insight-AI.
 
-# Whisper: tiny | base | small | medium | large (report used turbo → we use base/small for speed)
-WHISPER_MODEL = "base"
+All values can be overridden via environment variables (see .env.example).
+"""
 
-# Preprocessing
+import os
+
+# Whisper: tiny | base | small | medium | large
+WHISPER_MODEL: str = os.environ.get("WHISPER_MODEL", "base")
+
+# Preprocessing — these negative words are always kept during stopword removal
 NEGATIVE_WORDS = {
     "not",
     "no",
@@ -33,19 +38,21 @@ NEGATIVE_WORDS = {
     "mustn't",
 }
 
-# Sentiment (Task 3)
-SENTIMENT_CHUNK_SIZE = 200
-NEUTRAL_THRESHOLD = 0.05
+# Sentiment (Step 3)
+SENTIMENT_CHUNK_SIZE: int = int(os.environ.get("SENTIMENT_CHUNK_SIZE", "200"))
+NEUTRAL_THRESHOLD: float = float(os.environ.get("NEUTRAL_THRESHOLD", "0.05"))
 
-# Topic modeling (Task 4)
-TOPIC_CHUNK_SIZE = 300
-N_TOPICS = 5
+# Topic modeling (Step 4)
+TOPIC_CHUNK_SIZE: int = int(os.environ.get("TOPIC_CHUNK_SIZE", "300"))
+N_TOPICS: int = int(os.environ.get("N_TOPICS", "5"))
 
-# Summarization (Task 5)
-SUMMARY_MODEL = "google-t5/t5-base"
-SUMMARY_MAX_LENGTH = 150
-SUMMARY_MIN_LENGTH = 50
-SUMMARY_CHUNK_SIZE = 512
+# Summarization (Step 5)
+SUMMARY_MODEL: str = os.environ.get("SUMMARY_MODEL", "google-t5/t5-base")
+SUMMARY_MAX_LENGTH: int = int(os.environ.get("SUMMARY_MAX_LENGTH", "150"))
+SUMMARY_MIN_LENGTH: int = int(os.environ.get("SUMMARY_MIN_LENGTH", "50"))
+SUMMARY_CHUNK_SIZE: int = int(os.environ.get("SUMMARY_CHUNK_SIZE", "512"))
 
-# Emotion model (Task 3)
-EMOTION_MODEL = "j-hartmann/emotion-english-distilroberta-base"
+# Emotion model (Step 3)
+EMOTION_MODEL: str = os.environ.get(
+    "EMOTION_MODEL", "j-hartmann/emotion-english-distilroberta-base"
+)

@@ -5,6 +5,8 @@ services:
     build: .
     ports:
       - "8501:8501"
+    env_file:
+      - .env.example   # defaults; create .env alongside this file to override
     # Optional: mount local src for live code changes (dev)
     # volumes:
     #   - ./src:/app/src

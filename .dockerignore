@@ -17,8 +17,7 @@ Thumbs.db
 # CI/CD (not needed inside image)
 .github
 
-# Docs and report (optional: remove if you want Report in image)
-Report/
+# Docs (README optional in image)
 *.md
 !README.md
 

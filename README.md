@@ -1,144 +1,239 @@
-# NLP Audio-to-Text Pipeline
+# speech2insight-AI
 
-End-to-end NLP pipeline: **Audio → Transcribe → Preprocess → Sentiment → Topic Modeling → Summarization**, with **Streamlit** as the UI. Based on the DA2 NLP Mini Project Report.
+[![CI](https://github.com/utkarshsawant65/NLP-Project---audio-to-txt-converter/actions/workflows/ci.yml/badge.svg)](https://github.com/utkarshsawant65/NLP-Project---audio-to-txt-converter/actions/workflows/ci.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](LICENSE)
 
-## Features
+Turn speech into insights: upload an audio file and run a full NLP pipeline —
+**Transcribe → Preprocess → Sentiment → Topic Modeling → Summarization** — through a Streamlit web UI.
 
-| Step | Description |
-|------|-------------|
-| **1. Transcribe** | Upload audio (mp3, wav, etc.); transcribe with **OpenAI Whisper** (tiny/base/small/medium/large). |
-| **2. Preprocess** | Clean Whisper output; lowercase; remove punctuation/digits; NLTK tokenization; stopwords removed but **negative words kept** for sentiment. |
-| **3. Sentiment** | **TextBlob** chunk-based polarity/subjectivity; **aspect-based** sentiment; optional **emotion** detection (transformers). |
-| **4. Topic Modeling** | **LSA** (TF-IDF + TruncatedSVD); heatmap + **word clouds** per topic. |
-| **5. Summarization** | **T5** (chunked); optional **BLEU/ROUGE** if you provide a reference summary. |
+---
 
-## Requirements
+## Demo
 
-- **Python 3.10+**
-- No manual ffmpeg install: **ffmpeg** is provided via `imageio-ffmpeg` in `requirements.txt` (Windows/Linux/macOS). If you already have ffmpeg on PATH, that is used; otherwise the bundled binary is used automatically.
+The app runs in the browser. After `streamlit run app.py`, open `http://localhost:8501`.
 
-## Setup
+> A screenshot or screen recording of the Streamlit UI can be added here (e.g. `docs/demo.gif`).
+
+---
+
+## Quickstart
+
+### Local
 
 ```bash
-# Clone and enter project
+# 1. Clone
+git clone https://github.com/utkarshsawant65/NLP-Project---audio-to-txt-converter.git
 cd NLP-Project---audio-to-txt-converter
 
-# Create virtual environment (recommended)
+# 2. Create virtual environment
 python -m venv .venv
-.venv\Scripts\activate   # Windows
-# source .venv/bin/activate  # Linux/macOS
+# Windows:
+.venv\Scripts\activate
+# Linux / macOS:
+# source .venv/bin/activate
 
-# Install dependencies (includes bundled ffmpeg via imageio-ffmpeg)
+# 3. Install dependencies
 pip install -r requirements.txt
 
-# Download NLTK data (first run will prompt; or run once)
-python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
-```
+# 4. (Optional) copy and edit env vars
+cp .env.example .env
 
-## Run the app
-
-```bash
+# 5. Run
 streamlit run app.py
 ```
 
-Then open the URL shown (e.g. `http://localhost:8501`). **Transcription works out of the box** after `pip install -r requirements.txt`; no separate ffmpeg install or PATH setup needed.
+ffmpeg is bundled via `imageio-ffmpeg` — no separate install required.
 
-**Load time:** Whisper and heavy models are loaded only when you use **Transcribe** or **Summarization** (lazy imports + caching). The UI should open quickly; first transcription or summary may take longer while models load.
-
-## Usage
-
-1. **Upload** an audio file and click **Transcribe**, or **paste** a transcript to skip audio.
-2. Preprocessing runs on the transcript; you can inspect **preprocessed** text.
-3. **Sentiment**: view polarity/subjectivity/label; optionally add **aspects** and run **emotion** detection.
-4. **Topic Modeling**: set number of topics; view heatmap and **word clouds** per topic.
-5. **Summarization**: generate T5 summary; optionally paste a **reference** summary to see BLEU/ROUGE.
-
-## Docker
-
-Build and run with Docker (includes ffmpeg and all dependencies):
+### Docker
 
 ```bash
-# Build and run with Docker Compose
+# Build and run (includes ffmpeg and all deps)
 docker compose up --build
 ```
 
-Then open **http://localhost:8501**.
+Open `http://localhost:8501`.
 
 Or with plain Docker:
 
 ```bash
-docker build -t nlp-audio-txt .
-docker run -p 8501:8501 nlp-audio-txt
+docker build -t speech2insight-ai .
+docker run --env-file .env.example -p 8501:8501 speech2insight-ai
 ```
 
-## CI/CD
+---
 
-GitHub Actions workflow (`.github/workflows/ci.yml`):
-
-| Job   | Trigger        | What it does |
-|-------|----------------|---------------|
-| **Lint** | Push/PR to `main` or `master` | Runs [Ruff](https://docs.astral.sh/ruff/) on `app.py`, `src/`, `tests/`. |
-| **Test** | Same | Installs test deps and runs `pytest tests/` (no torch/whisper). |
-| **Build** | After lint | Builds the Docker image (no push). |
-| **Push** | Push to `main`/`master` only | Builds and pushes the image to **GitHub Container Registry** (`ghcr.io/<owner>/<repo>`). |
-
-- **Pull requests**: lint + Docker build only.
-- **Push to main**: same, then push image to GHCR (no extra secrets needed; `GITHUB_TOKEN` is used).
-
-To pull the image after push:
-
-```bash
-docker pull ghcr.io/<your-username>/NLP-Project---audio-to-txt-converter:latest
-```
-
-To extend: add a deploy job (e.g. Cloud Run, Azure Container Apps) or more test coverage.
-
-## Tests
-
-Unit tests use **pytest** and avoid heavy deps (Whisper/transformers) so CI stays fast:
+## How to Run Tests
 
 ```bash
 pip install -r requirements-test.txt
 python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords'); nltk.download('punkt_tab')"
-pytest tests/ -v
+pytest tests/ -v --tb=short --cov=src --cov-report=term-missing
 ```
 
-Or with dev deps: `pip install -e ".[dev]"` then `pip install -r requirements-test.txt`. CI runs Ruff, **pytest** (with coverage ≥50%), and **Pylint** (10/10) on every push/PR.
+Or via Makefile (after `make install`):
 
-**Pylint (full score):** `pylint app.py src/ tests/` — config in `.pylintrc`. **Coverage:** `pytest tests/ --cov=src --cov-report=term-missing`.
+```bash
+make test
+```
 
-## Project structure
+Tests avoid loading Whisper or HuggingFace models (mocked) so CI stays fast.
+
+---
+
+## Configuration
+
+Copy `.env.example` to `.env` and adjust values. All settings have sensible defaults and
+can also be set as OS environment variables.
+
+| Variable | Default | Description |
+|---|---|---|
+| `WHISPER_MODEL` | `base` | Whisper model size: `tiny`, `base`, `small`, `medium`, `large` |
+| `SENTIMENT_CHUNK_SIZE` | `200` | Words per chunk for TextBlob sentiment |
+| `NEUTRAL_THRESHOLD` | `0.05` | Polarity threshold for neutral classification |
+| `TOPIC_CHUNK_SIZE` | `300` | Words per chunk for LSA topic modeling |
+| `N_TOPICS` | `5` | Default number of LSA topics |
+| `SUMMARY_MODEL` | `google-t5/t5-base` | HuggingFace model for summarization |
+| `SUMMARY_MAX_LENGTH` | `150` | Max tokens per summary chunk |
+| `SUMMARY_MIN_LENGTH` | `50` | Min tokens per summary chunk |
+| `SUMMARY_CHUNK_SIZE` | `512` | Words per chunk fed to T5 |
+| `EMOTION_MODEL` | `j-hartmann/emotion-english-distilroberta-base` | HuggingFace model for emotion detection |
+
+---
+
+## Project Structure
 
 ```
-NLP-Project---audio-to-txt-converter/
-├── app.py                 # Streamlit UI
+speech2insight-AI/
+├── app.py                        # Streamlit UI (5-step pipeline)
 ├── Dockerfile
 ├── docker-compose.yml
-├── pyproject.toml          # Ruff + pytest config
-├── requirements.txt
-├── requirements-test.txt   # Minimal deps for pytest (fast CI)
+├── pyproject.toml                # Ruff, pytest, mypy, coverage config
+├── requirements.txt              # Production deps
+├── requirements-test.txt         # Minimal deps for fast CI tests
+├── Makefile                      # Developer shortcuts
+├── .env.example                  # Template for environment variables
+├── .pre-commit-config.yaml       # Pre-commit hooks (ruff, whitespace)
 ├── README.md
-├── .github/workflows/
-│   └── ci.yml             # CI/CD: lint, tests, Docker build, push to GHCR
-├── Report/
-│   └── MINI PROJECT REPORT DA2 NLP.docx
+├── CONTRIBUTING.md
+├── SECURITY.md
+├── CHANGELOG.md
+├── LICENSE
+├── .github/
+│   ├── workflows/
+│   │   └── ci.yml               # Lint, type-check, test, Docker build/push
+│   ├── dependabot.yml           # Automated dependency updates
+│   ├── ISSUE_TEMPLATE/
+│   │   └── bug_report.md
+│   └── pull_request_template.md
 ├── tests/
-│   ├── conftest.py        # Pytest fixtures
+│   ├── conftest.py
 │   ├── test_preprocess.py
 │   ├── test_sentiment.py
 │   ├── test_summarization.py
 │   ├── test_topic_modeling.py
 │   └── test_transcribe.py
 └── src/
-    ├── config.py          # Chunk sizes, thresholds, model names
-    ├── logger.py           # Optional centralized logging
-    ├── transcribe.py      # Whisper transcription (lazy load)
-    ├── preprocess.py      # NLTK preprocessing (stopwords, negatives)
-    ├── sentiment.py       # TextBlob, aspect-based, emotions
-    ├── topic_modeling.py  # LSA, TF-IDF, word clouds
-    └── summarization.py   # T5, BLEU/ROUGE
+    ├── config.py                 # Env-var-backed pipeline constants
+    ├── logger.py
+    ├── transcribe.py             # Whisper transcription
+    ├── preprocess.py             # NLTK preprocessing
+    ├── sentiment.py              # TextBlob + transformers sentiment
+    ├── topic_modeling.py         # LSA (TF-IDF + TruncatedSVD)
+    └── summarization.py          # T5 summarization + BLEU/ROUGE
 ```
+
+---
+
+## Architecture
+
+```
+Audio file (mp3/wav/m4a/ogg/flac)
+        |
+        v
+[1] Transcribe  -- OpenAI Whisper (tiny/base/small/medium/large)
+        |              ffmpeg (system or bundled via imageio-ffmpeg)
+        v
+[2] Preprocess  -- NLTK tokenization, lowercase, punct/digit removal,
+        |              stopword removal (negative words kept for sentiment)
+        v
+[3] Sentiment   -- TextBlob chunk-based polarity/subjectivity
+        |              Aspect-based sentiment (per-aspect sentence scoring)
+        |              Optional: emotion detection (transformers pipeline)
+        v
+[4] Topics      -- LSA: TF-IDF vectorizer + TruncatedSVD
+        |              Heatmap (seaborn) + word cloud (wordcloud) per topic
+        v
+[5] Summarize   -- T5 (google-t5/t5-base) chunked summarization
+                   Optional: BLEU / ROUGE-1/2/L vs. reference summary
+```
+
+Each step is independently togglable in the sidebar. Heavy models (Whisper, T5, emotion
+pipeline) are lazy-loaded and cached on first use.
+
+---
+
+## CI/CD
+
+GitHub Actions workflow (`.github/workflows/ci.yml`):
+
+| Job | Trigger | What it does |
+|---|---|---|
+| **Lint & Type Check** | Push/PR to `main` or `master` | Ruff lint + format check; mypy on `src/` |
+| **Test** | After lint | pytest with coverage >= 60%; Pylint |
+| **Security Audit** | Push/PR (independent) | pip-audit on `requirements.txt` |
+| **Build** | After test | Docker image build (no push) |
+| **Push** | Push to `main`/`master` only | Builds and pushes to GitHub Container Registry |
+
+---
+
+## Known Limitations
+
+- **Whisper model size**: The `base` model (default) is fast but less accurate than `large`.
+  Larger models require more RAM and are much slower on CPU. `fp16=False` is set to prevent
+  errors on CPU-only machines.
+- **GPU**: No GPU is configured in Docker or CI. Inference runs on CPU. For production use,
+  a CUDA-enabled image and GPU instance are recommended.
+- **ffmpeg**: Bundled via `imageio-ffmpeg` for convenience. If the bundled binary is
+  unavailable (rare edge case), install ffmpeg manually and add it to `PATH`.
+- **Short audio**: Very short clips (< 5 seconds) may transcribe poorly with smaller Whisper
+  models.
+- **Topic modeling**: LSA requires at least 2 distinct chunks (`TOPIC_CHUNK_SIZE` words each).
+  Very short transcripts may not produce meaningful topics.
+- **T5 summarization**: Works best on English text of 50+ words. Very short inputs produce
+  low-quality summaries.
+
+---
+
+## Roadmap / Next Steps
+
+- Add speaker diarization (e.g. pyannote-audio)
+- Support real-time microphone input via `streamlit-webrtc`
+- Expose a REST API alongside the Streamlit UI (FastAPI)
+- Add GPU support in Docker (NVIDIA base image)
+- Add a persistent transcript/results store (SQLite)
+- Expand language support beyond English (Whisper multilingual models)
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for dev setup, code style, and PR process.
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+---
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for how to report vulnerabilities.
+
+---
 
 ## License
 
-Unlicense (see [LICENSE](LICENSE)).
+This is free and unencumbered software released into the public domain.
+See [LICENSE](LICENSE) (Unlicense).

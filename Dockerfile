@@ -1,4 +1,4 @@
-# NLP Audio-to-Text Pipeline — Streamlit + Whisper (ffmpeg required)
+# speech2insight-AI — Streamlit + Whisper (ffmpeg in image)
 FROM python:3.11-slim-bookworm
 
 ENV PYTHONUNBUFFERED=1 \
